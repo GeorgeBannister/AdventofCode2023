@@ -17,8 +17,6 @@ test_inp = """...#......
 .......#..
 #...#....."""
 
-PART_2_GROW_SIZE = 1_000_000
-
 
 @dataclass(frozen=True)
 class Coord:
@@ -101,7 +99,6 @@ def solve_part_2(inp: str) -> int:
 
 if __name__ == "__main__":
     assert solve_part_1(test_inp) == 374
-    # assert solve_part_2(test_inp) ==
     inp = sys.argv[1]
     print(f"{solve_part_1(inp) = }")
     print(f"{solve_part_2(inp) = }")
