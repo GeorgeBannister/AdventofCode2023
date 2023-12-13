@@ -56,7 +56,6 @@ class Matrix:
 
             if not have_found_conflict and y * 100 != exclude_score:
                 return y * 100
-        return None
 
     def get_score_2(self) -> int:
         part_1_score = self.get_score()
@@ -68,7 +67,6 @@ class Matrix:
                 if score and score != part_1_score:
                     return score
                 self.flip(idx, idy)
-        raise Exception()
 
 
 def build_matrix(s: str) -> Matrix:
