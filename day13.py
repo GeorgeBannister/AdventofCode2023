@@ -19,17 +19,17 @@ test_inp = """#.##..##.
 ..##..###
 #....#..#"""
 
+
 @dataclass
-class Matrix():
+class Matrix:
     columns: list[list[bool]]
     rows: list[list[bool]]
 
     def flip(self, x: int, y: int) -> None:
-
         self.columns[x][y] = not self.columns[x][y]
         self.rows[y][x] = not self.rows[y][x]
 
-    def get_score(self, exclude_score = None) -> int:
+    def get_score(self, exclude_score=None) -> int:
         # Try to find vertical line
         for x in range(1, len(self.columns)):
             lhs = self.columns[:x]
@@ -54,30 +54,27 @@ class Matrix():
                 if top_side.pop(0) != bottom_side.pop(0):
                     have_found_conflict = True
 
-            if not have_found_conflict and y*100 != exclude_score:
+            if not have_found_conflict and y * 100 != exclude_score:
                 return y * 100
         return None
 
     def get_score_2(self) -> int:
-
         part_1_score = self.get_score()
 
         for idy in range(len(self.rows)):
             for idx in range(len(self.columns)):
                 self.flip(idx, idy)
-                score = self.get_score(exclude_score = part_1_score)
+                score = self.get_score(exclude_score=part_1_score)
                 if score and score != part_1_score:
                     return score
                 self.flip(idx, idy)
         raise Exception()
-                
 
 
 def build_matrix(s: str) -> Matrix:
-    lines = [[ char == "#" for char in line ]  for line in s.splitlines()]
-    cols = [[ line [x] for line in lines ] for x in range(len(lines[0]))] 
+    lines = [[char == "#" for char in line] for line in s.splitlines()]
+    cols = [[line[x] for line in lines] for x in range(len(lines[0]))]
     return Matrix(cols, lines)
-
 
 
 def solve_part_1(inp: str) -> int:
@@ -85,15 +82,16 @@ def solve_part_1(inp: str) -> int:
     acc = 0
     for sub in sub_inputs:
         score = build_matrix(sub).get_score()
-        acc += score 
+        acc += score
     return acc
+
 
 def solve_part_2(inp: str) -> int:
     sub_inputs = inp.split("\n\n")
     acc = 0
     for sub in sub_inputs:
         score = build_matrix(sub).get_score_2()
-        acc += score 
+        acc += score
     return acc
 
 
