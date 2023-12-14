@@ -3,8 +3,6 @@
 import sys
 import re
 from dataclasses import dataclass
-from pprint import pprint
-from itertools import combinations
 from functools import cache
 
 test_inp = """???.### 1,1,3
@@ -19,41 +17,45 @@ contiguous_broken_reg = re.compile(r"#+")
 mario_reg = re.compile(r"[?]")
 
 
-@dataclass(frozen = True)
+@dataclass(frozen=True)
 class Row:
     springs: str
     groups: tuple[int]
 
 
-def count_valid(row: Row) -> int:
+@cache
+def count_options(springs: str, groups: tuple[int]) -> int:
+    if not groups or len(groups) == 0:
+        if "#" in springs:
+            return 0
+        return 1
+
+    if not springs or springs == "":
+        return 0
+
+    if len(springs) < groups[0]:
+        return 0
+
+    next_char = springs[0]
     acc = 0
-    qidxs = []
 
-    num_extra_broken_springs = sum(row.groups) - row.springs.count("#")
+    if next_char in (".", "?"):
+        acc += count_options(springs[1:], groups)
 
-    for match in mario_reg.finditer(row.springs):
-        qidxs.append(match.start())
+    if next_char in ("#", "?"):
+        target_len = groups[0]
+        can_build_span = all([c in ("#", "?") for c in springs[:target_len]])
 
-    for combination in combinations(qidxs, num_extra_broken_springs):
-        if row_is_valid_fast(row.springs, row.groups, frozenset(combination)):
-            acc += 1
+        if can_build_span:
+            if len(springs) == target_len and len(groups) == 1:
+                return 1
+
+            if len(springs) == target_len:
+                return 0
+
+            if springs[target_len] != "#":
+                acc += count_options(springs[target_len + 1 :], groups[1:])
     return acc
-
-mask_num = ord("#")
-
-@cache
-def row_is_valid_fast(lhs: str, rhs: tuple, combination: frozenset) -> bool:
-    new_springs = bytearray(lhs, "ascii")
-    for i in combination:
-        new_new = new_springs
-        new_new[i] = mask_num
-    lens = tuple(len(match.group(0)) for match in contiguous_broken_reg.finditer(new_new.decode("ascii"))) 
-    return lens == rhs
-
-@cache
-def row_is_valid(row: Row) -> bool:
-    lens = tuple(len(match.group(0)) for match in contiguous_broken_reg.finditer(row.springs)) 
-    return lens == row.groups
 
 
 def solve_part_1(inp: str) -> int:
@@ -63,9 +65,10 @@ def solve_part_1(inp: str) -> int:
         lhs, rhs = line.split(" ")
         ints = [int(x) for x in pos_int_reg.findall(rhs)]
         rows.append(Row(lhs, tuple(ints)))
-    
+
     for row in rows:
-        acc += count_valid(row)
+        ans = count_options(row.springs, row.groups)
+        acc += ans
     return acc
 
 
@@ -76,21 +79,14 @@ def solve_part_2(inp: str) -> int:
         lhs, rhs = line.split(" ")
         ints = [int(x) for x in pos_int_reg.findall(rhs)]
         new_ints = tuple([*ints, *ints, *ints, *ints, *ints])
-
         new_lhs = f"{lhs}?{lhs}?{lhs}?{lhs}?{lhs}"
-
         rows.append(Row(new_lhs, new_ints))
-    
     for row in rows:
-        print(f"{row = }")
-        acc += count_valid(row)
+        acc += count_options(row.springs, row.groups)
     return acc
 
 
 if __name__ == "__main__":
-    assert row_is_valid(Row("#.#.###", (1, 1, 3)))
-    assert not row_is_valid(Row("##..###", (1, 1, 3)))
-
     assert solve_part_1(test_inp) == 21
     assert solve_part_2(test_inp) == 525152
     inp = sys.argv[1]
