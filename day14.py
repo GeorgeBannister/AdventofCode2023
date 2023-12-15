@@ -30,7 +30,7 @@ class Coord:
 class Grid:
     width: int
     height: int
-    moving_rocks: list[Coord]
+    moving_rocks: set[Coord]
     solid_rocks: set[Coord]
 
 
@@ -50,7 +50,7 @@ def parse_input(inp: str) -> Grid:
                     moving_rocks.append(Coord(x, y))
                 case "#":
                     solid_rocks.add(Coord(x, y))
-    return Grid(width, height, moving_rocks, solid_rocks)
+    return Grid(width, height, set(moving_rocks), solid_rocks)
 
 
 def move_rocks(grid: Grid) -> bool:
@@ -72,9 +72,9 @@ def move_rocks(grid: Grid) -> bool:
                 and shadow_rock not in grid.moving_rocks
             ):
                 rock_has_moved = True
-                for idx in range(len(grid.moving_rocks)):
-                    if grid.moving_rocks[idx] == coord:
-                        grid.moving_rocks[idx] = shadow_rock
+                grid.moving_rocks.remove(coord)
+                grid.moving_rocks.add(shadow_rock)
+
     return rock_has_moved
 
 
@@ -112,13 +112,129 @@ def solve_part_1(inp: str) -> int:
     return acc
 
 
+def move_rocks_part_2(grid: Grid) -> int:
+    cycle = 0
+    d = {}
+    target_cycle = 1_000_000_000
+    have_jumped = False
+
+    while cycle < target_cycle:
+        memo_item = frozenset(grid.moving_rocks)
+
+        if not have_jumped and memo_item in d:
+            have_jumped = True
+            print(f"Can skip {cycle} {d[memo_item]}")
+            jump_size = cycle - d[memo_item]
+            print(f"{jump_size = }")
+            turns_to_fin = target_cycle - cycle
+            num_jumps = turns_to_fin // jump_size
+            print(f"{num_jumps = }")
+            cycle += num_jumps * jump_size
+
+        d[memo_item] = cycle
+
+        move_delta = Coord(0, -1)
+
+        have_moved = True
+        while have_moved:
+            have_moved = False
+
+            for y in range(grid.height):
+                for x in range(grid.width):
+                    coord = Coord(x, y)
+                    if coord.y == 0 or coord not in grid.moving_rocks:
+                        continue
+                    shadow_rock = coord + move_delta
+                    if (
+                        shadow_rock not in grid.solid_rocks
+                        and shadow_rock not in grid.moving_rocks
+                    ):
+                        have_moved = True
+                        grid.moving_rocks.remove(coord)
+                        grid.moving_rocks.add(shadow_rock)
+
+        move_delta = Coord(-1, 0)
+
+        have_moved = True
+        while have_moved:
+            have_moved = False
+
+            for x in range(grid.width):
+                for y in range(grid.height):
+                    coord = Coord(x, y)
+                    if coord.x == 0 or coord not in grid.moving_rocks:
+                        continue
+                    shadow_rock = coord + move_delta
+                    if (
+                        shadow_rock not in grid.solid_rocks
+                        and shadow_rock not in grid.moving_rocks
+                    ):
+                        have_moved = True
+                        grid.moving_rocks.remove(coord)
+                        grid.moving_rocks.add(shadow_rock)
+
+        move_delta = Coord(0, 1)
+
+        have_moved = True
+        while have_moved:
+            have_moved = False
+
+            for y in reversed(range(grid.height)):
+                for x in range(grid.width):
+                    coord = Coord(x, y)
+                    if coord.y == grid.height - 1 or coord not in grid.moving_rocks:
+                        continue
+                    shadow_rock = coord + move_delta
+                    if (
+                        shadow_rock not in grid.solid_rocks
+                        and shadow_rock not in grid.moving_rocks
+                    ):
+                        have_moved = True
+                        grid.moving_rocks.remove(coord)
+                        grid.moving_rocks.add(shadow_rock)
+
+        move_delta = Coord(1, 0)
+
+        have_moved = True
+        while have_moved:
+            have_moved = False
+
+            for x in reversed(range(grid.width)):
+                for y in range(grid.height):
+                    coord = Coord(x, y)
+                    if coord.x == grid.width - 1 or coord not in grid.moving_rocks:
+                        continue
+                    shadow_rock = coord + move_delta
+                    if (
+                        shadow_rock not in grid.solid_rocks
+                        and shadow_rock not in grid.moving_rocks
+                    ):
+                        have_moved = True
+                        grid.moving_rocks.remove(coord)
+                        grid.moving_rocks.add(shadow_rock)
+
+        print(cycle)
+
+        cycle += 1
+    acc = 0
+    for y in range(grid.height):
+        for x in range(grid.width):
+            co = Coord(x, y)
+            if co in grid.moving_rocks:
+                acc += abs(y - grid.height)
+    print(f"{acc = }")
+    pretty_grid(grid)
+    return acc
+
+
 def solve_part_2(inp: str) -> int:
-    pass
+    grid = parse_input(inp)
+    return move_rocks_part_2(grid)
 
 
 if __name__ == "__main__":
     assert solve_part_1(test_inp) == 136
-    # assert solve_part_2(test_inp) ==
+    assert solve_part_2(test_inp) == 64
     inp = sys.argv[1]
     print(f"{solve_part_1(inp) = }")
     print(f"{solve_part_2(inp) = }")
