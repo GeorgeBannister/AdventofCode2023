@@ -6,7 +6,9 @@ import sys
 from dataclasses import dataclass
 from typing import Literal
 import re
-from pprint import pprint
+from copy import deepcopy
+import functools
+import operator
 
 
 @dataclass
@@ -21,8 +23,8 @@ class Part:
 class Workflow:
     value: Literal["x"] | Literal["m"] | Literal["a"] | Literal["s"]
     comp: Literal["<"] | Literal[">"]
-    comp_value: int
-    true_path: str | True | False
+    comp_value: int | str
+    true_path: str | bool
 
     def do_cmp(self, compare_to: Part) -> bool:
         command = f"compare_to.{self.value} {self.comp} {self.comp_value}"
@@ -97,10 +99,6 @@ def parse_input(inp: str) -> tuple[dict[str, list[Workflow]], list[Part]]:
 
 def solve_part_1(inp: str) -> int:
     workflows, parts = parse_input(inp)
-    pprint(workflows)
-    print()
-    pprint(parts)
-
     points_acc = 0
 
     for part in parts:
@@ -133,13 +131,75 @@ def solve_part_1(inp: str) -> int:
                         curr_name = wf.true_path
                         wf_ended = True
                         break
-
-    print(f"{points_acc = }")
     return points_acc
 
 
+def mutate_cons(con_map: dict, wf: Workflow, inverse=False):
+    if inverse:
+        if wf.comp == "<":
+            # Item.bla is greater than val
+            con_map[wf.value][0] = max(con_map[wf.value][0], int(wf.comp_value) )
+        else:  # ">"
+            # Item.bla is smaller than val
+            con_map[wf.value][1] = min(con_map[wf.value][1], int(wf.comp_value) )
+    else:
+        if wf.comp == "<":
+            # Item.bla is smaller than val
+            con_map[wf.value][1] = min(con_map[wf.value][1], int(wf.comp_value) - 1)
+        else:  # ">"
+            # Item.bla is greater than val
+            con_map[wf.value][0] = max(con_map[wf.value][0], int(wf.comp_value) + 1)
+    
+
+
+def get_branches(workflows: dict[str, list[Workflow]]) -> int:
+    # Smallest, Biggest
+    cons = {
+        "x": [1, 4000],
+        "m": [1, 4000],
+        "a": [1, 4000],
+        "s": [1, 4000],
+    }
+    # Curr node, dict, idx
+    stack: list[tuple[str, dict, int]] = [("in", cons, 0)]
+    acc = 0
+    while stack:
+        curr_name, d, idx = stack.pop()
+        curr_wf = workflows[curr_name][idx]
+
+
+        if curr_wf is False:
+            continue
+
+        if curr_wf is True:
+            acc += functools.reduce(operator.mul, [x[1] - x[0] + 1 for x in d.values()])
+            continue
+
+        new_map = deepcopy(d)
+        mutate_cons(new_map, curr_wf)
+
+        if curr_wf.true_path == "A" or curr_wf.true_path is True:
+            acc += functools.reduce(operator.mul, [x[1] - x[0] + 1 for x in new_map.values()])
+
+        elif curr_wf.true_path == "R" or curr_wf.true_path is False:
+            pass
+
+        else:
+            stack.append((curr_wf.true_path, new_map, 0))
+
+        if idx < len(workflows[curr_name]) - 1:
+            new_map = deepcopy(d)
+            mutate_cons(new_map, curr_wf, True)
+            stack.append((curr_name, new_map, idx + 1))
+
+    return acc
+
+
 def solve_part_2(inp: str) -> int:
-    pass
+    # range (1, 4001)
+    workflows, _ = parse_input(inp)
+    score = get_branches(workflows)
+    return score
 
 
 if __name__ == "__main__":

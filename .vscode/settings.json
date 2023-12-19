@@ -1,0 +1,9 @@
+{
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "editor.formatOnSave": true,
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+    "python.languageServer": "Pylance"
+}
