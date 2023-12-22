@@ -100,19 +100,6 @@ def populate_supported_by(bricks: list[Brick]) -> None:
                     brick.supported_by.add(brick2.uid)
 
 
-def enum_supporting_bricks(bricks: list[Brick]) -> set[int]:
-    acc = set()
-    for brick in bricks:
-        shadow_points = [point + fall_delta for point in brick.points]
-        for brick2 in bricks:
-            if brick2.uid != brick.uid:
-                if any(
-                    [shadow_p == p for shadow_p in shadow_points for p in brick2.points]
-                ):
-                    acc.add(brick2.uid)
-    return acc
-
-
 def solve_part_1(inp: str) -> int:
     bricks: list[Brick] = parse_inp(inp)
     bricks.sort(key=lambda x: x.get_min_z())
