@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 import itertools
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 test_inp = """...........
@@ -75,6 +75,7 @@ def solve_part_1(inp: str, num_turns: int) -> int:
                     coord_acc.add(neighbor)
         coords = coord_acc
         turn += 1
+        print(f"after {turn} turns = {len(coords)}")
     return len(coords)
 
 
@@ -101,7 +102,10 @@ def solve_part_2(inp: str) -> int:
     coords = set([start_coord])
     turn = 0
     counts = []
-    while turn < 500:
+
+    print(f"{(num_steps - 65) % 131 = }")
+
+    while turn < 1250:
         coord_acc = set()
         for coord in coords:
             for neighbor in coord.list_neighbors():
@@ -113,30 +117,10 @@ def solve_part_2(inp: str) -> int:
         turn += 1
         counts.append((turn, len(coords)))
 
-    test = []
-    last_0 = 0
-    for pair in counts:
-        turn, c = pair
-        num_periods = turn // period
-        num_squares = 2 * pow(num_periods + 1, 2) - 2 * (num_periods + 1) + 1
-
-        turns_into_seq = turn % period
-
-        if turns_into_seq == 0:
-            last_0 = c / num_squares
-            print(f"0 = {c / num_squares}")
-        else:
-            print(f"{turns_into_seq} = {c / num_squares - last_0}")
-
-        test.append((pair[0], pair[1], num_periods, num_squares))
-
-    xs = [x[0] for x in test]
-    ys = [x[1] / x[3] for x in test]
-
-    plt.plot(xs, ys)
-    plt.show()
-
-    print([x for x in zip(xs, ys)])
+    for x in counts:
+        turn, num = x
+        if turn == 65 or (turn - 65) % 131 == 0:
+            print(f"{turn}: {num}")
 
     return 0
 
@@ -144,6 +128,6 @@ def solve_part_2(inp: str) -> int:
 if __name__ == "__main__":
     assert solve_part_1(test_inp, 6) == 16
     inp = sys.argv[1]
-    print(f"{solve_part_1(inp, 64) = }")
+    print(f"{solve_part_1(inp, 200) = }")
     # print(f"{solve_part_2(test_inp) = }")
     print(f"{solve_part_2(inp) = }")
